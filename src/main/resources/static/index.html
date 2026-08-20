@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Bharat Yatra — Tourism, Heritage &amp; Culture of India</title>
+<meta name="description" content="Explore India in 3D. Pick a state, open a district, and get its monuments, festivals, street food, language, crafts, stays and hidden gems — plus community knowledge added by locals.">
+<meta name="theme-color" content="#07070f">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='42' fill='none' stroke='%23FF8A2B' stroke-width='7'/><circle cx='50' cy='50' r='8' fill='%235B7CFF'/></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=Noto+Sans:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<!-- ==================================================== photo backdrop -->
+<div id="backdrop" aria-hidden="true"><div class="veil"></div></div>
+<div id="bgCaption"></div>
+
+<!-- ======================================================= 3D stage -->
+<div id="stage" aria-hidden="true"></div>
+<div id="tooltip"></div>
+<div class="maphint" id="maphint">Drag to rotate · Scroll to zoom · Click a state</div>
+
+<!-- ========================================================== header -->
+<header class="top">
+  <div class="brand" onclick="go('#/')" role="button" tabindex="0">
+    <svg class="chakra" viewBox="0 0 100 100" aria-hidden="true">
+      <circle cx="50" cy="50" r="43" fill="none" stroke="#FF8A2B" stroke-width="5"/>
+      <circle cx="50" cy="50" r="9" fill="#5B7CFF"/>
+      <g id="spokes" stroke="#FFB566" stroke-width="2.2"></g>
+    </svg>
+    <div>
+      <b>Bharat <span style="color:var(--saffron)">Yatra</span></b>
+      <small data-i18n="tagline">Tourism · Heritage · Culture</small>
+    </div>
+  </div>
+  <div class="spacer"></div>
+  <button class="navbtn hidesm" onclick="go('#/explore')" data-i18n="nav_explore">Explore</button>
+  <button class="navbtn hidesm" onclick="openYatra()"><span>🧭</span> <span data-i18n="nav_yatra">My Yatra</span> <b id="yatraCount">0</b></button>
+  <select class="navbtn" id="langSel" aria-label="Interface language" onchange="setLang(this.value)"></select>
+  <button class="navbtn hidesm" id="a11yBtn" onclick="toggleA11y()" title="Accessibility: larger text & high contrast">♿</button>
+  <button class="navbtn hidesm" onclick="openQR()" title="Share via QR">▦</button>
+  <button class="navbtn pri" onclick="go('#/contribute')">+ <span data-i18n="nav_add">Add a place</span></button>
+</header>
+
+<!-- ============================================================ main -->
+<main id="main">
+  <section class="hero" id="hero">
+    <span class="kicker">🇮🇳 <span data-i18n="kicker">Smart India Hackathon · Tourism, Heritage &amp; Culture</span></span>
+    <h1 data-i18n="h1">Every district of India, <em>told properly.</em></h1>
+    <p data-i18n="lede">Spin the map. Open a state, then a district — and get its monuments, festivals, street food, local language, crafts, where to stay and the places only locals know. Then add what's missing from your own town.</p>
+    <div class="herobtns">
+      <button class="navbtn pri" onclick="openStateList()" data-i18n="cta1">Choose a state</button>
+      <button class="navbtn" onclick="surprise()" data-i18n="cta2">🎲 Surprise me</button>
+      <button class="navbtn" onclick="go('#/contribute')" data-i18n="cta3">I'm a local — add my place</button>
+    </div>
+    <div class="statrow" id="stats"></div>
+    <div class="scrollcue" onclick="document.getElementById('below').scrollIntoView({behavior:'smooth'})">
+      <span>Scroll for journeys</span><i>↓</i></div>
+  </section>
+
+  <!-- ============ image sections that live BELOW the 3D map ============ -->
+  <section id="below" class="below">
+    <div class="belowinner">
+      <div class="bsec">
+        <h2>Explore by region</h2>
+        <p class="bsub">Eight cultural regions, thirty-seven states and union territories.</p>
+        <div class="rgrid" id="regionGrid"></div>
+      </div>
+
+      <div class="bsec">
+        <h2>Start with these</h2>
+        <p class="bsub">Deep district guides — monuments, festivals, food, language, crafts, stays.</p>
+        <div class="fgrid" id="featuredGrid"></div>
+      </div>
+
+      <div class="bsec">
+        <h2>Added by locals this week</h2>
+        <p class="bsub">Places no guidebook lists, documented by the people who live there.</p>
+        <div class="fgrid" id="communityGrid"></div>
+        <button class="cta" style="max-width:420px;margin-top:18px" onclick="go('#/contribute')">
+          + Add a place from your district</button>
+      </div>
+
+      <footer class="bfoot">
+        <b>Bharat Yatra</b>
+        <span>Smart India Hackathon · Tourism, Heritage &amp; Culture · 37 states · 725 districts</span>
+        <span>Photographs: Wikimedia Commons · Illustrations: AI-generated, labelled as such</span>
+      </footer>
+    </div>
+  </section>
+</main>
+
+<!-- ======================================================= side sheet -->
+<aside class="sheet" id="sheet" role="dialog" aria-label="Details">
+  <header>
+    <div class="ttl">
+      <h2 id="sheetTitle">—</h2>
+      <div class="sub" id="sheetSub"></div>
+    </div>
+    <button class="x" onclick="speakPage()" title="Read aloud" aria-label="Read aloud">🔊</button>
+    <button class="x" onclick="dismissSheet()" aria-label="Close">✕</button>
+  </header>
+  <div class="body" id="sheetBody"></div>
+</aside>
+
+<!-- ==================================================== full district page -->
+<div id="page" role="document"></div>
+
+<!-- =========================================================== modals -->
+<div class="modal" id="qrModal" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="box">
+    <h2>Scan to open Bharat Yatra</h2>
+    <p style="color:var(--dim);font-size:13.5px" id="qrNote">Point a phone camera at this code.</p>
+    <div id="qr"></div>
+    <code style="font-size:11.5px;color:var(--dim);word-break:break-all" id="qrUrl"></code>
+    <div id="qrWarn" class="note" style="margin-top:12px;display:none;text-align:left"></div>
+    <div style="display:flex;gap:7px;margin-top:12px;flex-wrap:wrap;justify-content:center" id="qrBtns"></div>
+    <input class="search" id="qrCustom" style="margin-top:10px;padding-left:14px"
+           placeholder="Or paste your hosted URL, e.g. https://bharat-yatra.onrender.com"
+           onkeydown="if(event.key==='Enter')useCustomQR()">
+    <div class="two" style="margin-top:10px">
+      <button class="cta ghost" onclick="useCustomQR()">Use this URL</button>
+      <button class="cta ghost" onclick="downloadQR()">⬇ Save QR as PNG</button>
+    </div>
+    <button class="cta" style="margin-top:8px" onclick="document.getElementById('qrModal').classList.remove('open')">Close</button>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script src="vendor/three.min.js"></script>
+<script src="vendor/OrbitControls.js"></script>
+<script src="vendor/qrcode.min.js"></script>
+<script src="i18n.js"></script>
+<script src="ai-art.js"></script>
+<script src="map3d.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

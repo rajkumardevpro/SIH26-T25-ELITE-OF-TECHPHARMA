@@ -1,0 +1,13 @@
+# Render Blueprint — lets you deploy with:  New +  ->  Blueprint  ->  pick this repo
+services:
+  - type: web
+    name: bharat-yatra
+    runtime: docker
+    plan: free
+    region: singapore          # closest Render region to India
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: JAVA_TOOL_OPTIONS
+        value: "-Xmx256m -Xms64m"
