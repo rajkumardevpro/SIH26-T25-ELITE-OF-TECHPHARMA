@@ -71,8 +71,14 @@ public class App {
         HttpServer server = HttpServer.create(new InetSocketAddress("0.0.0.0", port), 0);
         server.createContext("/api/", new ApiHandler());
         server.createContext("/", new StaticHandler());
-        server.setExecutor(Executors.newFixedThreadPool(16));
+        server.setExecutor(Executors.newFixedThreadPool(8));
         server.start();
+
+        // containers stop services with SIGTERM: finish in-flight requests, then exit cleanly
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            System.out.println("  shutting down…");
+            server.stop(2);
+        }));
 
         System.out.println();
         System.out.println("  ####  BHARAT YATRA  ####");
@@ -83,6 +89,44 @@ public class App {
         System.out.println("  On your phone : http://" + lanIp() + ":" + port + "   (same Wi-Fi)");
         System.out.println("  Press Ctrl+C to stop.");
         System.out.println();
+
+        startKeepAlive();
+    }
+
+    /**
+     * Free hosting tiers hibernate a service after ~15 minutes without traffic,
+     * and the wake-up can fail with a 502/503 exactly when a judge scans your QR.
+     * Set the env var KEEPALIVE_URL to your public address and the app will ping
+     * itself every 10 minutes so it never goes to sleep.
+     *
+     *     KEEPALIVE_URL = https://bharat-yatra1.onrender.com/api/health
+     */
+    static void startKeepAlive() {
+        String url = System.getenv("KEEPALIVE_URL");
+        if (url == null || url.trim().isEmpty()) return;
+        final String target = url.trim();
+        System.out.println("  Keep-alive    : pinging " + target + " every 10 min");
+        Thread t = new Thread(() -> {
+            while (true) {
+                try {
+                    Thread.sleep(10 * 60 * 1000L);
+                    java.net.HttpURLConnection c =
+                            (java.net.HttpURLConnection) new java.net.URL(target).openConnection();
+                    c.setRequestProperty("User-Agent", "BharatYatra-KeepAlive");
+                    c.setConnectTimeout(10000);
+                    c.setReadTimeout(15000);
+                    int code = c.getResponseCode();
+                    c.getInputStream().close();
+                    System.out.println("  keep-alive ping -> " + code);
+                } catch (InterruptedException ie) {
+                    return;
+                } catch (Exception e) {
+                    System.out.println("  keep-alive ping failed: " + e);
+                }
+            }
+        }, "keep-alive");
+        t.setDaemon(true);
+        t.start();
     }
 
     // ------------------------------------------------------------------ setup
@@ -141,7 +185,15 @@ public class App {
     // ------------------------------------------------------------- static web
 
     static class StaticHandler implements HttpHandler {
-        public void handle(HttpExchange ex) throws IOException {
+        public void handle(HttpExchange ex) {
+            try { serve(ex); }
+            catch (Throwable t) {
+                System.err.println("static error: " + t);
+                try { send(ex, 500, "text/plain; charset=utf-8", "error"); } catch (Exception ignored) { }
+            }
+        }
+
+        void serve(HttpExchange ex) throws IOException {
             String path = ex.getRequestURI().getPath();
             if (path.equals("/") || path.isEmpty()) path = "/index.html";
             // single page app: unknown extension-less routes fall back to index
@@ -177,6 +229,7 @@ public class App {
         if (f.endsWith(".js")) return "application/javascript; charset=utf-8";
         if (f.endsWith(".css")) return "text/css; charset=utf-8";
         if (f.endsWith(".json")) return "application/json; charset=utf-8";
+        if (f.endsWith(".webmanifest")) return "application/manifest+json; charset=utf-8";
         if (f.endsWith(".svg")) return "image/svg+xml";
         if (f.endsWith(".png")) return "image/png";
         if (f.endsWith(".jpg") || f.endsWith(".jpeg")) return "image/jpeg";
@@ -189,11 +242,12 @@ public class App {
 
     static class ApiHandler implements HttpHandler {
         public void handle(HttpExchange ex) throws IOException {
+            ex.getResponseHeaders().add("Cache-Control", "no-store");
             ex.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
             ex.getResponseHeaders().add("Access-Control-Allow-Headers", "Content-Type");
             String path = ex.getRequestURI().getPath();
             String method = ex.getRequestMethod();
-            if (method.equals("OPTIONS")) { send(ex, 204, "text/plain", ""); return; }
+            if (method.equals("OPTIONS")) { sendBytes(ex, 204, "text/plain", new byte[0]); return; }
             try {
                 Map<String, String> q = query(ex.getRequestURI().getRawQuery());
                 switch (path) {
@@ -509,9 +563,36 @@ public class App {
     }
 
     static void sendBytes(HttpExchange ex, int code, String type, byte[] body) throws IOException {
-        ex.getResponseHeaders().set("Content-Type", type);
-        ex.sendResponseHeaders(code, body.length);
-        try (OutputStream os = ex.getResponseBody()) { os.write(body); }
+        try {
+            ex.getResponseHeaders().set("Content-Type", type);
+            boolean head = "HEAD".equalsIgnoreCase(ex.getRequestMethod());
+            boolean empty = body == null || body.length == 0;
+
+            if (head || empty || code == 204 || code == 304) {
+                // -1 => "no response body". Passing 0 here makes the JDK server use
+                // chunked encoding, which is illegal for HEAD/204 and breaks proxies.
+                if (!head && !empty) {
+                    ex.sendResponseHeaders(code, body.length);
+                    try (OutputStream os = ex.getResponseBody()) { os.write(body); }
+                } else {
+                    if (head && !empty)
+                        ex.getResponseHeaders().set("Content-Length", String.valueOf(body.length));
+                    // The JDK's HTTP server always drops the socket after a HEAD.
+                    // Saying so explicitly stops the platform's proxy from re-using a
+                    // dead connection — that re-use is what produced random 404s
+                    // ("x-render-routing: no-server") for unrelated files.
+                    if (head) ex.getResponseHeaders().set("Connection", "close");
+                    ex.sendResponseHeaders(code, -1);
+                }
+            } else {
+                ex.sendResponseHeaders(code, body.length);
+                try (OutputStream os = ex.getResponseBody()) { os.write(body); }
+            }
+        } catch (IOException io) {
+            // client went away mid-response; never let it bubble up and kill the handler
+        } finally {
+            ex.close();
+        }
     }
 
     static String jstr(String s) {

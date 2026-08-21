@@ -111,18 +111,18 @@ const Map3D = (function () {
     if (!ready) return;
     new THREE.TextureLoader().load(url, tex => {
       tex.anisotropy = 4;
-      const g = new THREE.PlaneGeometry(78, 78);
+      const g = new THREE.PlaneGeometry(50, 50);
       const m = new THREE.MeshBasicMaterial({
         map: tex, transparent: true, opacity: 0.0, depthWrite: false
       });
       ground = new THREE.Mesh(g, m);
-      ground.position.z = -1.2;          // sits under the extruded states
+      ground.position.z = -2.0;          // sits under the extruded states
       root.add(ground);
       // gentle fade-in
       const t0 = performance.now();
       (function fade() {
         const k = Math.min(1, (performance.now() - t0) / 1400);
-        m.opacity = 0.62 * k;
+        m.opacity = 0.30 * k;
         if (k < 1) requestAnimationFrame(fade);
       })();
     });

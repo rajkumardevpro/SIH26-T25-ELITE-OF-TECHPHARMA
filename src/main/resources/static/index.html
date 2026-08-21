@@ -11,6 +11,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=Noto+Sans:wght@400;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
+<link rel="manifest" href="manifest.webmanifest">
 </head>
 <body>
 <a class="skip" href="#main">Skip to content</a>
@@ -42,7 +43,9 @@
   <button class="navbtn hidesm" onclick="openYatra()"><span>🧭</span> <span data-i18n="nav_yatra">My Yatra</span> <b id="yatraCount">0</b></button>
   <select class="navbtn" id="langSel" aria-label="Interface language" onchange="setLang(this.value)"></select>
   <button class="navbtn hidesm" id="a11yBtn" onclick="toggleA11y()" title="Accessibility: larger text & high contrast">♿</button>
+  <button class="navbtn hidesm" onclick="AR.open()" title="AR Heritage Finder — point your phone around you">🧭 <span class="hidesm">AR</span></button>
   <button class="navbtn hidesm" onclick="openQR()" title="Share via QR">▦</button>
+  <button class="navbtn hidesm" id="installBtn" style="display:none" onclick="installApp()">⬇ Install</button>
   <button class="navbtn pri" onclick="go('#/contribute')">+ <span data-i18n="nav_add">Add a place</span></button>
 </header>
 
@@ -55,6 +58,7 @@
     <div class="herobtns">
       <button class="navbtn pri" onclick="openStateList()" data-i18n="cta1">Choose a state</button>
       <button class="navbtn" onclick="surprise()" data-i18n="cta2">🎲 Surprise me</button>
+      <button class="navbtn" onclick="nearMe()">📍 Near me</button>
       <button class="navbtn" onclick="go('#/contribute')" data-i18n="cta3">I'm a local — add my place</button>
     </div>
     <div class="statrow" id="stats"></div>
@@ -78,6 +82,22 @@
       </div>
 
       <div class="bsec">
+        <h2>See it before you go</h2>
+        <p class="bsub">Step inside a 360° panorama, or point your phone at the horizon and let the
+          heritage around you label itself.</p>
+        <div class="immersive">
+          <button class="imbtn" onclick="VR.open('Uttar Pradesh','Varanasi',['Dashashwamedh Ghat','Kashi Vishwanath','Sarnath'])">
+            <span class="beta">360°</span><span class="ic">🥽</span>
+            <b>Try the VR walk-in</b>
+            <small>Drag on a laptop, tilt on a phone, or split the screen for a Cardboard viewer</small></button>
+          <button class="imbtn" onclick="AR.open()">
+            <span class="beta">Beta</span><span class="ic">🧭</span>
+            <b>Open the AR finder</b>
+            <small>Live camera, real compass bearing and distance to every documented site near you</small></button>
+        </div>
+      </div>
+
+      <div class="bsec">
         <h2>Added by locals this week</h2>
         <p class="bsub">Places no guidebook lists, documented by the people who live there.</p>
         <div class="fgrid" id="communityGrid"></div>
@@ -88,7 +108,7 @@
       <footer class="bfoot">
         <b>Bharat Yatra</b>
         <span>Smart India Hackathon · Tourism, Heritage &amp; Culture · 37 states · 725 districts</span>
-        <span>Photographs: Wikimedia Commons · Illustrations: AI-generated, labelled as such</span>
+        <span>Photographs: Wikimedia Commons · Illustrations: original artwork, labelled as such</span>
       </footer>
     </div>
   </section>
@@ -135,8 +155,10 @@
 <script src="vendor/OrbitControls.js"></script>
 <script src="vendor/qrcode.min.js"></script>
 <script src="i18n.js"></script>
-<script src="ai-art.js"></script>
+<script src="artwork.js"></script>
 <script src="map3d.js"></script>
+<script src="vr.js"></script>
+<script src="ar.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

@@ -11,3 +11,7 @@ services:
     envVars:
       - key: JAVA_TOOL_OPTIONS
         value: "-Xmx256m -Xms64m"
+      # Set this to your own live URL after the first deploy so the free
+      # instance never hibernates (that is what causes the 502 / 503).
+      - key: KEEPALIVE_URL
+        value: "https://bharat-yatra1.onrender.com/api/health"

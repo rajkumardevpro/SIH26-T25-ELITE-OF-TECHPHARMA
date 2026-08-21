@@ -1,0 +1,17 @@
+{
+  "name": "Bharat Yatra — Tourism, Heritage & Culture",
+  "short_name": "Bharat Yatra",
+  "description": "Every district of India: monuments, festivals, food, language, crafts, transport, VR and AR — documented by locals.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#07070f",
+  "theme_color": "#07070f",
+  "lang": "en-IN",
+  "categories": ["travel", "education", "navigation"],
+  "icons": [
+    { "src": "img/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "img/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
